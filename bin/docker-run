@@ -7,5 +7,5 @@ docker run
   -e GITHUB_REPO=$GITHUB_REPO \
   -e GITHUB_BRANCH=$GITHUB_BRANCH \
   -e FORCE_COLOR=1 \
-  -v `pwd`/report:/container/workspace/repocitory-code/test/report \
+  -v `pwd`/report:/container/workspace/repository-code/test/report \
    medux/docker-node-test-builder

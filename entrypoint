@@ -5,8 +5,6 @@ set -xe
 : "${GITHUB_USER?Need a GitHub username}"
 : "${GITHUB_REPO?Need a repository name}"
 : "${GITHUB_BRANCH?Need a GitHub branch}"
-: "${REPO_DIR:=repository-code}"
-: "${TEMP:=temp}"
 
 # For pull requests https://help.github.com/articles/checking-out-pull-requests-locally/
 if [[ $GITHUB_BRANCH == *PR-[0-9]* ]]; then
@@ -16,25 +14,20 @@ if [[ $GITHUB_BRANCH == *PR-[0-9]* ]]; then
   GITHUB_BRANCH=develop
 fi
 
-
+# Clone repo and get inside
 if [[ -z "${GITHUB_TOKEN}" ]]; then
-  git clone -b "$GITHUB_BRANCH" https://github.com/"$GITHUB_USER"/"$GITHUB_REPO".git "$TEMP"
+  git clone -b "$GITHUB_BRANCH" https://github.com/"$GITHUB_USER"/"$GITHUB_REPO".git /tmp/"$GITHUB_REPO"
 else
-  git clone -b "$GITHUB_BRANCH" https://"$GITHUB_TOKEN"@github.com/"$GITHUB_USER"/"$GITHUB_REPO".git "$TEMP"
+  git clone -b "$GITHUB_BRANCH" https://"$GITHUB_TOKEN"@github.com/"$GITHUB_USER"/"$GITHUB_REPO".git /tmp/"$GITHUB_REPO"
 fi
 
-
+# Specific action for Pull Requests
 if [[ $PR_BRANCH == *PR-[0-9]* ]]; then
-
-  cd "$WORK_DIR/$TEMP"
+  cd /tmp/"$GITHUB_REPO"
   git fetch origin pull/$PR_BRANCH_ID/head:$PR_BRANCH
   git checkout $PR_BRANCH
 fi
 
-rsync -rva --force $WORK_DIR/$TEMP/*  "$WORK_DIR/$REPO_DIR"
-rsync -rva --force $WORK_DIR/$TEMP/.*  "$WORK_DIR/$REPO_DIR"
-
-cd "$WORK_DIR/$REPO_DIR"
-
+# Install dependencies and perform tests
 npm install
 npm test
