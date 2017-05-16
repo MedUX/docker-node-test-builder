@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -xe
+
+: "${GITHUB_USER?Need a GitHub username}"
+: "${GITHUB_REPO?Need a repository name}"
+: "${GITHUB_BRANCH?Need a GitHub branch}"
+: "${REPO_DIR:=repository-code}"
+: "${TEMP:=temp}"
+
+# For pull requests https://help.github.com/articles/checking-out-pull-requests-locally/
+if [[ $GITHUB_BRANCH == *PR-[0-9]* ]]; then
+
+  PR_BRANCH_ID=$(echo $GITHUB_BRANCH | cut -f2 -d "-")
+  PR_BRANCH="PR-$PR_BRANCH_ID"
+  GITHUB_BRANCH=develop
+fi
+
+
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  git clone -b "$GITHUB_BRANCH" https://github.com/"$GITHUB_USER"/"$GITHUB_REPO".git "$TEMP"
+else
+  git clone -b "$GITHUB_BRANCH" https://"$GITHUB_TOKEN"@github.com/"$GITHUB_USER"/"$GITHUB_REPO".git "$TEMP"
+fi
+
+
+if [[ $PR_BRANCH == *PR-[0-9]* ]]; then
+
+  cd "$WORK_DIR/$TEMP"
+  git fetch origin pull/$PR_BRANCH_ID/head:$PR_BRANCH
+  git checkout $PR_BRANCH
+fi
+
+rsync -rva --force $WORK_DIR/$TEMP/*  "$WORK_DIR/$REPO_DIR"
+rsync -rva --force $WORK_DIR/$TEMP/.*  "$WORK_DIR/$REPO_DIR"
+
+cd "$WORK_DIR/$REPO_DIR"
+
+npm install
+npm test
